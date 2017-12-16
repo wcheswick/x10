@@ -1,0 +1,12 @@
+#!/bin/sh
+#
+#	groundfloor [on|off]
+
+x10 $1 b13
+x10 $1 b14
+x10 $1 b15
+
+case $1 in
+off)	x10 $1 b16;;	# don't turn on the halogens
+esac
+

@@ -1,0 +1,10 @@
+#!/bin/sh
+#
+#	front [on|off]
+
+x10 $1 b12	# front lamppost lights
+x10 $1 b10	# front welcome lights
+
+case $1 in
+on)	x10 bright b10 31
+esac

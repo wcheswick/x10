@@ -1,0 +1,9 @@
+#!/bin/sh
+#
+#	kitchen [on|off]
+
+x10 $1 h1
+x10 $1 h2
+x10 $1 h3
+x10 $1 h4
+x10 $1 h5

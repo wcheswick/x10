@@ -1,0 +1,8 @@
+#!/bin/sh
+#
+#	upstairs [on|off]
+
+x10 $1 b1
+x10 $1 b2
+x10 $1 b4
+

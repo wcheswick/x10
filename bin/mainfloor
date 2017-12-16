@@ -1,0 +1,11 @@
+#!/bin/sh
+#
+#	mainfloor [on|off]
+
+x10 $1 m1
+x10 $1 m2
+x10 $1 m3
+x10 $1 m4
+x10 $1 m5
+x10 $1 b9
+

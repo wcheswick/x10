@@ -1,0 +1,24 @@
+#!/bin/sh
+#
+prog=start_x10
+
+PATH=$PATH:$HOME/bin
+export PATH
+
+PIDFILE=/var/tmp/$prog.pid
+
+if [ -s $PIDFILE ]
+then
+	pid=`cat $PIDFILE`
+	pslen=`ps -p $pid 2>/dev/null | wc -l`
+	case `echo $pslen` in
+	0)	;;
+	1)	rm -f $PIDFILE;;
+	2)	echo "$prog: x10 already running, not starting another" 1>&2
+		exit 1;;	# already running
+	esac
+fi
+
+x10 2>>/var/log/x10 &
+
+echo "$!" >$PIDFILE

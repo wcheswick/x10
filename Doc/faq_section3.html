@@ -1,0 +1,160 @@
+<HTML>
+<HEAD>
+<TITLE>FAQ section 3 : Details on X10 Protocol </TITLE>
+</HEAD>
+<BODY>
+<H1>FAQ section 3 : Details on X10 Protocol </H1>
+<UL>
+</UL>
+<HR>
+<P> <STRONG>Note</STRONG>:  This section applies to 60 Hz North American wiring.  Relevance of
+this to European wiring is not known.
+<P> Each ONE bit in a legitimate X10 transmission is a 1 millisecond (mS) pulse 
+code modulated burst of 120KHz on the AC line, and each ZERO is the absence 
+of that burst.  The exact length of the burst may not be too critical in 
+most applications.  The burst is sent three times for each bit, once at 
+each AC zero-crossing (accounting for zero-crossing in 3-phase).  That 
+means once each 2.778 mS.  The next bit is sent on the following zero-
+crossing.  This is done to get the quietest time on the AC line for the 
+receiver, whatever phase of the AC it's on.  The zero crossing gives the 
+best signal-to-noise ratio for data transmission because everything should 
+be shut down then (i.e. the voltage is low). 
+<P> <PRE>
+              .  .  .                                                     .
+           .           .                                               .
+        .                 .                                         .
+     .                       .                                   .
+  ._____________________________._____________________________.___________
+  ^         ^         ^         ^ .       ^         ^     .   ^         ^
+  1         1         1         2    .    2         2  .      3        etc.
+                                         .           .
+                                            .  .  .
+
+
+</PRE>
+In addition, each bit is sent both true and complemented, and each code 
+sequence is sent twice.  That's a lot of bit redundancy, and just barely 
+enough to make it past the noise on the line, depending on actual 
+conditions. 
+<P> A single normal command takes eleven cycles of the AC line to finish.  All 
+legal commands must first start with the header 1110, a unique code as 
+described below.  The header bits take two cycles at one bit per half 
+cycle.  The next four cycles are the four-bit House Code, but it takes 
+eight bits total because each bit is sent true then complemented.  This is 
+similar to biphase encoding, as the bit value changes state half-way 
+through the transmission, and improves transmission reliability.  The last 
+five AC cycles are the Unit / Function Code, a five bit code that takes ten 
+bits (again, true then complemented).  For any codes except the DIM, BRIGHT 
+and the data following the EXTENDED DATA function, there's a mandatory 
+three cycle pause before sending another command  DIM and BRIGHT don't 
+necessarily need a pause, and the data after the EXTENDED DATA command 
+absolutely MUST follow immediately until all bytes have been sent.  The 
+EXTENDED DATA code is handy, as any number of eight-bit bytes may follow. 
+The data bytes must follow the true/complement rule, so will take eight 
+cycles per byte, with no pause between bytes until complete. The only legal 
+sequence that doesn't conform to the true/complement rule are the start 
+bits 1110 that lead the whole thing off, likely because the modules need 
+some way to tell when it's OK to start listening again. 
+<P> A full transmission containing everything looks like this (see the end of
+this section for the actual command codes):
+<P> <PRE>
+   1 1 1 0  H8 /H8 H4 /H4 H2 /H2 H1 /H1  D8 /D8 D4 /D4 D2 /D2 D1 /D1 F /F
+   (start)         (House code)                 (Unit/Function code)
+
+</PRE>
+So, to turn on Unit 12 of House code A, send the following:
+<P> <PRE>
+   1 1 1 0   0 1 1 0 1 0 0 1   1 0 0 1 1 0 1 0 0 1  (House A, Unit 12)
+
+</PRE>
+then wait at least three full AC cycles and send it again, then wait three
+and send:
+<P> <PRE>
+   1 1 1 0   0 1 1 0 1 0 0 1   0 1 0 1 1 0 0 1 1 0  (House A, Function ON)
+
+</PRE>
+again wait three cycles and send it the last time.  Total transmission
+would have been 264 discrete bits (don't forget the 3-phase) and would take
+53 cycles of the AC line, or about .883 seconds.
+<P> It's perfectly allowable to stack the Unit or Function codes together, so
+sending Unit 2  Unit 3  Unit 12  ON (separated by 3 cycles minimum) will
+turn on all 3 units.  Stacking ON and OFF codes is annoying and flashes the
+lights quickly (roughly 4 Hz).
+<P> <P> <HR>
+<H2>X10 COMMAND CODES
+</H2>
+<P> <PRE>
+         House Codes                         Unit/Function Codes
+
+       H8  H4  H2  H1                        D8  D4  D2  D1   F
+
+    A   0   1   1   0                  1      0   1   1   0   0
+    B   1   1   1   0                  2      1   1   1   0   0
+    C   0   0   1   0                  3      0   0   1   0   0
+    D   1   0   1   0                  4      1   0   1   0   0
+    E   0   0   0   1                  5      0   0   0   1   0
+    F   1   0   0   1                  6      1   0   0   1   0
+    G   0   1   0   1                  7      0   1   0   1   0
+    H   1   1   0   1                  8      1   1   0   1   0
+    I   0   1   1   1                  9      0   1   1   1   0
+    J   1   1   1   1                 10      1   1   1   1   0
+    K   0   0   1   1                 11      0   0   1   1   0
+    L   1   0   1   1                 12      1   0   1   1   0
+    M   0   0   0   0                 13      0   0   0   0   0
+    N   1   0   0   0                 14      1   0   0   0   0
+    O   0   1   0   0                 15      0   1   0   0   0
+    P   1   1   0   0                 16      1   1   0   0   0
+                           All Units Off      0   0   0   0   1
+                            All Units On      0   0   0   1   1
+                                      On      0   0   1   0   1
+                                     Off      0   0   1   1   1
+                                     Dim      0   1   0   0   1
+                                  Bright      0   1   0   1   1
+                          All Lights Off      0   1   1   0   1
+                           Extended Code      0   1   1   1   1
+                            Hail Request      1   0   0   0   1   Note 1
+                        Hail Acknowledge      1   0   0   1   1
+                             Pre-Set Dim      1   0   1   X   1   Note 2
+                           Extended Data      1   1   0   0   1   Note 3
+                            Status is On      1   1   0   1   1
+                           Status is Off      1   1   1   0   1
+                          Status request      1   1   1   1   1   Note 4
+
+</PRE>
+<STRONG>Note 1</STRONG>:  Hail Request is transmitted to see if there are any other X10
+         compatible transmitters within listening range.
+<P> <STRONG>Note 2</STRONG>:  In a Pre-Set Dim function, the D1 bit represents the MSB of the
+         level and the 4 House code bits represent the 4 least significant
+         bits.  No known X10 device responds to the Pre-Set Dim function.
+<P> <STRONG>Note 3</STRONG>:  The Extended Data code is followed by eight-bit bytes which can
+         be any data you might want to send (like temperature).  There
+         must be no delay between the Extended Data code and the actual
+         data bytes, and no delay between data bytes.
+<P> <STRONG>Note 4</STRONG>:  The X10 RF to AC Gateway model RR501 is a two-way module.  If the
+         RR501 is addressed by transmitting its House Code and Unit Code and
+         then the STATUS REQUEST is transmitted, the RR501 will respond by
+         transmitting Status ON if it's turned on, or Status OFF if it's off.
+<P> <P> <HR>
+<H2>RECOMMENDED SPECS TO ENSURE RELIABLE COMMUNICATION TO ALL X10 DEVICES:
+</H2>
+<P> <PRE>
+  Carrier Oscillation Frequency         120KHz +/- 5%  (s/b 2%, but 5% OK)
+
+  Zero Crossing Detection               100uS +/- 100uS
+
+  Width of Transmitted Carrier          1mS +/- 50uS
+
+  Transmitter output power              60 mW average (5V pk-pk into 5 ohms)
+
+  Isolation Voltage                     2500V RMS. 60Hz for 1 min.
+
+<HR>
+<H2><FAQ SECTION 4>
+</H2>
+
+</PRE>
+<HR><EM>
+ASCII FAQ Maintainer: Tim Green (t.green@ieee.org)<BR>
+Hypertext FAQ Maintainer: 
+<A HREF="http://www.myrias.ab.ca/~wmh">Wade Holst</A> (wade@cs.ualberta.ca)
+</EM></BODY></HTML>

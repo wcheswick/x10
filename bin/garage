@@ -1,0 +1,40 @@
+#!/bin/sh
+#
+prog=garage
+usage="$prog [open|closed]"
+
+SAY=house_say_cache
+
+if [ -s /var/tmp/garage.lock ]
+then
+	exit
+fi
+
+echo $$ >/var/tmp/garage.lock
+sleep 1
+
+if [ ! -s /var/tmp/garage.lock -o `sed 1q /var/tmp/garage.lock` != $$ ]
+then
+	exit
+fi
+
+case $1 in
+open)	
+	if [ -f /var/tmp/garage.opened ]
+	then
+		$SAY "garage door still opened."
+	else
+		>/var/tmp/garage.opened
+		rm -f /var/tmp/garage.closed
+		iswakinghours && $SAY "garage door opening."
+	fi;;
+
+closed)	if [ ! -f /var/tmp/garage.closed ]
+	then
+		>/var/tmp/garage.closed
+		rm -f /var/tmp/garage.opened
+		iswakinghours && $SAY "garage door closed."
+	fi;;
+esac
+
+rm /var/tmp/garage.lock

@@ -1,0 +1,8 @@
+#!/bin/sh
+#
+#	outside [on|off]
+
+x10 $1 b7	# back outside lights
+front $1
+x10 $1 b5	# windows
+
